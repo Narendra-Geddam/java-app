@@ -1,3 +1,4 @@
+/* groovylint-disable-next-line CompileStatic */
 pipeline {
     agent { label 'maven-agent' }
     stages {
@@ -12,6 +13,17 @@ pipeline {
             steps {
                 echo 'Testing the application'
                 sh 'mvn clean test'
+            }
+        }
+        stage('Coade Analysis') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                        sh '''
+                            mvn verify sonar:sonar \
+                            -Dsonar.projectKey=java-app \
+                            -Dsonar.projectName=java-app
+                        '''
+                }
             }
         }
         stage('Build') {
