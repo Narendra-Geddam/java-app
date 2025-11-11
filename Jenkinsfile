@@ -26,6 +26,15 @@ pipeline {
                 }
             }
         }
+        stage('Trivy Scan') {
+            steps {
+                echo 'Performing security scan with Trivy'
+                sh '''
+                wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl -O html.tpl
+                trivy fs . --format template --template "@html.tpl" -o trivy-report.html
+                '''
+            }
+        }
         stage('Build') {
             steps {
                 echo 'Building the application'
