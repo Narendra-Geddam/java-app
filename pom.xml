@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.artisantek</groupId>
-    <artifactId>java-tomcat-21</artifactId>
+    <artifactId>java-app</artifactId>
     <version>1.0.0</version>
     <packaging>war</packaging>
 
-    <name>ArtisanTek Java Tomcat WAR</name>
+    <name>ArtisanTek Java WAR</name>
     <description>A lightweight Java 21 web application packaged as a WAR for Tomcat.</description>
 
     <properties>

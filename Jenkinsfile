@@ -41,10 +41,26 @@ pipeline {
                 sh 'mvn clean package'
             }
         }
-        stage('Archive') {
+        // stage('Archive') {
+        //     steps {
+        //         echo 'Archiving the build artifacts'
+        //         archiveArtifacts artifacts: 'target/*.war', fingerprint: true
+        //     }
+        // }
+        stage('JFrog Upload') {
             steps {
-                echo 'Archiving the build artifacts'
-                archiveArtifacts artifacts: 'target/*.war', fingerprint: true
+                echo 'Uploading artifacts to JFrog Artifactory'
+                rtUpload (
+                    serverId: 'artifactory-server',
+                    spec: '''{
+                        "files": [
+                            {
+                                "pattern": "target/*.war",
+                                "target": "task-4/com/java-app/"
+                            }
+                        ]
+                    }'''
+                )
             }
         }
     }
