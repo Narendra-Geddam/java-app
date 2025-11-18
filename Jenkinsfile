@@ -1,55 +1,68 @@
 /* groovylint-disable-next-line CompileStatic */
 pipeline {
     agent { label 'maven-agent' }
+
     stages {
+
         stage('Checkout') {
             steps {
-                echo 'cloning the repo'
-                git branch: 'main', url: 'https://github.com/Narendra-Geddam/java-app.git'
+                echo "Cloning branch: ${env.BRANCH_NAME}"
+                checkout scm
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Testing the application'
+                echo "Running tests on ${env.BRANCH_NAME}"
                 sh 'mvn clean test'
             }
         }
-        stage('Coade Analysis') {
+
+        stage('Code Analysis') {
             steps {
+                echo "Running SonarQube scan on ${env.BRANCH_NAME}"
                 withSonarQubeEnv('sonar') {
-                        sh '''
-                            mvn verify sonar:sonar \
-                            -Dsonar.projectKey=java-app \
-                            -Dsonar.projectName=java-app
-                        '''
+                    sh '''
+                        mvn verify sonar:sonar \
+                        -Dsonar.projectKey=java-app \
+                        -Dsonar.projectName=java-app
+                    '''
                 }
             }
         }
+
         stage('Trivy Scan') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'dev'
+                }
+            }
             steps {
-                echo 'Performing security scan with Trivy'
+                echo "Running security scan on ${env.BRANCH_NAME}"
                 sh '''
-                wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl -O html.tpl
-                trivy fs . --format template --template "@html.tpl" -o trivy-report.html
+                    wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl -O html.tpl
+                    trivy fs . --format template --template "@html.tpl" -o trivy-report.html
                 '''
             }
         }
-        stage('Build') {
+
+        stage('Build (main only)') {
+            when {
+                branch 'main'
+            }
             steps {
-                echo 'Building the application'
+                echo "Building the application on MAIN"
                 sh 'mvn clean package'
             }
         }
-        // stage('Archive') {
-        //     steps {
-        //         echo 'Archiving the build artifacts'
-        //         archiveArtifacts artifacts: 'target/*.war', fingerprint: true
-        //     }
-        // }
-        stage('JFrog Upload') {
+
+        stage('JFrog Upload (main only)') {
+            when {
+                branch 'main'
+            }
             steps {
-                echo 'Uploading artifacts to JFrog Artifactory'
+                echo "Uploading WAR to JFrog Artifactory"
                 rtUpload (
                     serverId: 'artifactory-server',
                     spec: '''{
@@ -64,8 +77,10 @@ pipeline {
             }
         }
     }
+
     post {
         always {
+            echo "Cleaning workspace for branch: ${env.BRANCH_NAME}"
             cleanWs()
         }
     }
